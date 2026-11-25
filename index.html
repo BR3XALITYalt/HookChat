@@ -37,7 +37,8 @@
   .servers{padding:calc(9px + env(safe-area-inset-top)) 5px max(10px,env(safe-area-inset-bottom));gap:10px}
   .server{width:40px;height:40px;flex:none}
   .sidebar{display:none;position:fixed;z-index:20;left:52px;top:0;bottom:0;bottom:env(safe-area-inset-bottom);width:min(300px,calc(100vw - 68px));box-shadow:8px 0 24px #0008;padding-bottom:env(safe-area-inset-bottom)}
-  .app.sidebar-hidden .sidebar{display:none}\n  .app.show-sidebar .sidebar{display:flex}
+  .app.sidebar-hidden .sidebar{display:none}
+  .app.show-sidebar .sidebar{display:flex}
   .app.show-sidebar:before{content:"";position:fixed;z-index:19;inset:0;background:#0009}
   .topbar{height:54px;padding:0 10px;gap:10px;padding-top:env(safe-area-inset-top)}
   #menu{width:40px;height:40px;flex:none;border-radius:8px}
@@ -101,7 +102,9 @@
  const status=(s,kind="")=>{ $("status").textContent=s;$("status").className="status "+kind; };
  function setMode(next){mode=next;$("webhookTab").classList.toggle("active",next==="webhook");$("botTab").classList.toggle("active",next==="bot");$("webhookPanel").classList.toggle("hidden",next!=="webhook");$("botPanel").classList.toggle("hidden",next!=="bot");$("guildList").innerHTML="";$("channelList").innerHTML="";$("composerWrap").hidden=true;status("Not connected");}
  $("webhookTab").onclick=()=>setMode("webhook");$("botTab").onclick=()=>setMode("bot");
- function setSidebar(open){const mobile=window.matchMedia("(max-width:520px)").matches;$("app").classList.toggle("show-sidebar",mobile&&open);$("app").classList.toggle("sidebar-hidden",!mobile&&!open);$("menu").setAttribute("aria-expanded",String(open));}\n $("menu").onclick=()=>{const mobile=window.matchMedia("(max-width:520px)").matches;const open=mobile?!$("app").classList.contains("show-sidebar"):$("app").classList.contains("sidebar-hidden");setSidebar(open);};\n $("closeSidebar").onclick=()=>setSidebar(false);
+ function setSidebar(open){const mobile=window.matchMedia("(max-width:520px)").matches;$("app").classList.toggle("show-sidebar",mobile&&open);$("app").classList.toggle("sidebar-hidden",!mobile&&!open);$("menu").setAttribute("aria-expanded",String(open));}
+ $("menu").onclick=()=>{const mobile=window.matchMedia("(max-width:520px)").matches;const open=mobile?!$("app").classList.contains("show-sidebar"):$("app").classList.contains("sidebar-hidden");setSidebar(open);};
+ $("closeSidebar").onclick=()=>setSidebar(false);
  function closeMobileSidebar(){if(window.matchMedia("(max-width:520px)").matches)setSidebar(false);}
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMobileSidebar();});
  document.addEventListener("click",e=>{if(!window.matchMedia("(max-width:520px)").matches)return;if(!$ ("app").classList.contains("show-sidebar"))return;if(!e.target.closest(".sidebar")&&!e.target.closest("#menu"))closeMobileSidebar();});
