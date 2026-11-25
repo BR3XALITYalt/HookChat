@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1e1f22">
+<title>HookChat</title>
+<style>
+:root{color-scheme:dark;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:#313338;color:#dbdee1}
+*{box-sizing:border-box}body{margin:0;height:100vh;overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer;border:0;color:inherit}
+.app{height:100dvh;display:grid;grid-template-columns:68px 230px minmax(0,1fr);background:#313338}
+.servers{background:#1e1f22;padding:12px 10px;display:flex;flex-direction:column;gap:9px;align-items:center;overflow:auto}
+.server{width:46px;height:46px;border-radius:50%;background:#313338;display:grid;place-items:center;font-weight:700;font-size:15px;transition:border-radius .12s}
+.server:hover,.server.active{border-radius:16px;background:#5865f2}.server.add{color:#23a559;font-size:24px}
+.sidebar{background:#2b2d31;display:flex;flex-direction:column;min-width:0;border-right:1px solid #252629}
+.brand{height:52px;padding:0 16px;display:flex;align-items:center;font-weight:750;font-size:16px;border-bottom:1px solid #252629}
+.connection{padding:12px;display:grid;gap:8px;border-bottom:1px solid #252629}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:#1e1f22;padding:3px;border-radius:6px}
+.tabs button{padding:7px 4px;background:transparent;border-radius:4px;color:#b5bac1}.tabs button.active{background:#404249;color:white}
+.field{width:100%;border:1px solid #1e1f22;background:#1e1f22;color:#f2f3f5;border-radius:5px;padding:9px;outline:none}
+.field:focus{border-color:#5865f2}.primary{background:#5865f2;border-radius:5px;padding:9px 12px;color:white;font-weight:600}.primary:hover{background:#4752c4}
+.hint{font-size:11px;color:#949ba4}.list-head{padding:18px 12px 7px;color:#949ba4;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.guilds,.channels{overflow:auto}.guild-item,.channel-item{width:100%;text-align:left;background:transparent;padding:8px 12px;color:#949ba4;border-radius:4px;display:flex;gap:8px;align-items:center}
+.guild-item:hover,.channel-item:hover{background:#35373c;color:#dbdee1}.guild-item.active,.channel-item.active{background:#404249;color:white}
+.channel-item{padding-left:18px}.channel-item:before{content:"#";font-size:18px;color:#777d86}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}.topbar{height:52px;flex:none;border-bottom:1px solid #252629;display:flex;align-items:center;padding:0 18px;gap:9px;font-weight:700;box-shadow:0 1px 2px #2223}
+.topic{font-weight:400;color:#949ba4;font-size:12px;margin-left:auto}
+.messages{flex:1;overflow:auto;padding:18px 22px 28px;display:flex;flex-direction:column;gap:16px}
+.message{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px}.avatar{width:38px;height:38px;border-radius:50%;background:#5865f2;display:grid;place-items:center;font-weight:700;color:white}
+.msg-head{display:flex;gap:8px;align-items:baseline}.author{font-weight:650;color:#f2f3f5}.time{font-size:11px;color:#949ba4}.content{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:3px}.content a{color:#00a8fc}
+.composer-wrap{padding:0 20px 22px}.composer{background:#383a40;border-radius:8px;padding:10px;display:flex;gap:10px;align-items:flex-end}.composer textarea{flex:1;resize:none;max-height:160px;min-height:24px;background:transparent;border:0;outline:0;color:#dbdee1;padding:4px}.composer button{background:#5865f2;border-radius:5px;padding:7px 13px;color:white}
+.empty{margin:auto;text-align:center;color:#949ba4;max-width:420px;padding:30px}.empty h2{color:#f2f3f5;font-size:22px}.status{font-size:11px;color:#949ba4}.status.ok{color:#23a559}.status.bad{color:#ed4245}
+.hidden{display:none!important}
+@media(max-width:720px){.app{grid-template-columns:54px 180px minmax(0,1fr)}.servers{padding:10px 5px}.server{width:40px;height:40px}.connection{padding:8px}.messages{padding:14px 12px}.composer-wrap{padding:0 10px 12px}.topic{display:none}}
+@media(max-width:520px){.app{grid-template-columns:52px minmax(0,1fr)}.sidebar{display:none}.app.show-sidebar{grid-template-columns:52px minmax(0,1fr)}.app.show-sidebar .sidebar{display:flex;position:absolute;z-index:5;left:52px;top:0;bottom:0;width:230px;box-shadow:8px 0 24px #0008}.topbar{padding:0 10px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+ <aside class="servers" id="serverRail"><div class="server active" title="HookChat">H</div></aside>
+ <aside class="sidebar">
+  <div class="brand">HookChat</div>
+  <section class="connection">
+   <div class="tabs"><button id="webhookTab" class="active">Webhook</button><button id="botTab">Bot</button></div>
+   <div id="webhookPanel">
+    <input class="field" id="webhookUrl" type="password" placeholder="Webhook URL" autocomplete="off">
+    <button class="primary" id="webhookConnect">Connect webhook</button>
+    <div class="hint">Send-only. Discord webhooks cannot browse channels or read message history.</div>
+   </div>
+   <div id="botPanel" class="hidden">
+    <input class="field" id="botToken" type="password" placeholder="Bot token" autocomplete="off">
+    <button class="primary" id="botConnect">Connect bot</button>
+    <div class="hint">The token stays in memory and is sent directly from this browser to Discord. Do not use this on a shared device or an untrusted copy of this page.</div>
+   </div>
+   <div class="status" id="status">Not connected</div>
+  </section>
+  <div class="list-head">Servers</div><div class="guilds" id="guildList"><div class="hint" style="padding:0 12px">Connect a bot to load servers.</div></div>
+  <div class="list-head">Channels</div><div class="channels" id="channelList"></div>
+ </aside>
+ <main class="main">
+  <header class="topbar"><button id="menu" style="background:transparent;font-size:20px" aria-label="Toggle sidebar">☰</button><span id="channelTitle">Welcome to HookChat</span><span class="topic" id="topTopic">Discord-style client</span></header>
+  <section class="messages" id="messages"><div class="empty"><h2>Welcome to HookChat</h2><p>Connect a webhook to send messages, or connect a bot to browse its servers and channels.</p><p class="hint">This is a static GitHub Pages app. No server or database is involved.</p></div></section>
+  <div class="composer-wrap" id="composerWrap" hidden><div class="composer"><textarea id="messageInput" rows="1" placeholder="Message"></textarea><button id="sendButton">Send</button></div></div>
+ </main>
+</div>
+<script>
+(() => {
+ const $ = id => document.getElementById(id);
+ const API = "https://discord.com/api/v10";
+ let mode="webhook", webhook="", token="", currentGuild=null, currentChannel=null, ws=null, heartbeat=null, sequence=null, lastMessageIds=new Set();
+ const status=(s,kind="")=>{ $("status").textContent=s;$("status").className="status "+kind; };
+ function setMode(next){mode=next;$("webhookTab").classList.toggle("active",next==="webhook");$("botTab").classList.toggle("active",next==="bot");$("webhookPanel").classList.toggle("hidden",next!=="webhook");$("botPanel").classList.toggle("hidden",next!=="bot");$("guildList").innerHTML="";$("channelList").innerHTML="";$("composerWrap").hidden=true;status("Not connected");}
+ $("webhookTab").onclick=()=>setMode("webhook");$("botTab").onclick=()=>setMode("bot");
+ $("menu").onclick=()=> $("app").classList.toggle("show-sidebar");
+ async function api(path,options={}){const r=await fetch(API+path,{...options,headers:{Authorization:"Bot "+token,"Content-Type":"application/json",...(options.headers||{})}});const data= r.status===204?null:await r.json().catch(()=>null);if(!r.ok)throw new Error(data?.message||("Discord API error "+r.status));return data;}
+ function safeText(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+ function addMessage(m){if(!m||lastMessageIds.has(m.id))return;lastMessageIds.add(m.id);const row=document.createElement("article");row.className="message";const name=m.author?.global_name||m.author?.username||m.webhook_id&&"Webhook"||"Unknown";const initial=(name[0]||"?").toUpperCase();const date=m.timestamp?new Date(m.timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";row.innerHTML='<div class="avatar">'+safeText(initial)+'</div><div><div class="msg-head"><span class="author">'+safeText(name)+'</span><span class="time">'+safeText(date)+'</span></div><div class="content">'+safeText(m.content||"")+'</div></div>'; $("messages").append(row);$("messages").scrollTop=$("messages").scrollHeight;}
+ function clearMessages(){ $("messages").innerHTML="";lastMessageIds.clear(); }
+ async function connectWebhook(){const value=$("webhookUrl").value.trim();if(!/^https:\/\/discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w.-]+/.test(value)){status("That does not look like a Discord webhook URL.","bad");return;}webhook=value;mode="webhook";$("composerWrap").hidden=false;$("messageInput").placeholder="Message as webhook";$("channelTitle").textContent="Webhook channel";$("topTopic").textContent="Send-only connection";$("guildList").innerHTML='<div class="hint" style="padding:0 12px">Webhook connections cannot list servers.</div>';$("channelList").innerHTML="";clearMessages();$("messages").innerHTML='<div class="empty"><h2>Webhook connected</h2><p>Messages you send will appear in the configured Discord channel. Existing messages cannot be loaded.</p></div>';status("Webhook ready","ok");}
+ async function connectBot(){token=$("botToken").value.trim();if(!token){status("Enter a bot token.","bad");return;}try{status("Checking bot token...");const me=await api("/users/@me");if(!me.bot)throw new Error("This token does not belong to a bot.");$("channelTitle").textContent=me.username;$("topTopic").textContent="Bot connection";$("composerWrap").hidden=true;clearMessages();$("messages").innerHTML='<div class="empty"><h2>Bot connected</h2><p>Loading servers from the Discord Gateway...</p></div>';await startGateway();status("Connected as "+me.username,"ok");}catch(e){token="";status(e.message,"bad");}}
+ async function startGateway(){const info=await api("/gateway/bot");if(ws)ws.close();if(heartbeat)clearInterval(heartbeat);ws=new WebSocket(info.url+"?v=10&encoding=json");ws.onmessage=async ev=>{const p=JSON.parse(ev.data);if(p.s!==null)sequence=p.s;switch(p.op){case 10:heartbeat=setInterval(()=>{if(ws?.readyState===1)ws.send(JSON.stringify({op:1,d:sequence}));},p.d.heartbeat_interval);ws.send(JSON.stringify({op:2,d:{token,intents:1|512|32768,properties:{"$os":"browser","$browser":"HookChat","$device":"HookChat"}}}));break;case 0:if(p.t==="READY"){const guilds=p.d.guilds||[];renderGuilds(guilds);if(guilds.length)selectGuild(guilds[0].id);}if(p.t==="GUILD_CREATE")addGuild(p.d);if(p.t==="MESSAGE_CREATE"&&p.d.channel_id===currentChannel)addMessage(p.d);break;case 7:ws.close();break;case 9:status("Discord rejected the Gateway session. Check bot intents and permissions.","bad");ws.close();break;}};ws.onclose=()=>{if(heartbeat)clearInterval(heartbeat);};ws.onerror=()=>status("Gateway connection failed.","bad");}
+ function renderGuilds(guilds){$("guildList").innerHTML="";guilds.forEach(addGuild);}
+ function addGuild(g){if(!g?.id||document.querySelector('[data-guild="'+g.id+'"]'))return;const b=document.createElement("button");b.className="guild-item";b.dataset.guild=g.id;b.textContent=g.name||"Unnamed server";b.onclick=()=>selectGuild(g.id);$("guildList").append(b);}
+ async function selectGuild(id){currentGuild=id;document.querySelectorAll(".guild-item").forEach(b=>b.classList.toggle("active",b.dataset.guild===id));try{const channels=await api("/guilds/"+id+"/channels");$("channelList").innerHTML="";channels.filter(c=>c.type===0||c.type===5).forEach(c=>{const b=document.createElement("button");b.className="channel-item";b.textContent=c.name;b.onclick=()=>selectChannel(c);$("channelList").append(b);});}catch(e){status(e.message,"bad");}}
+ async function selectChannel(c){currentChannel=c.id;document.querySelectorAll(".channel-item").forEach(b=>b.classList.toggle("active",b.textContent===c.name));$("channelTitle").textContent=c.name;$("topTopic").textContent="";$("composerWrap").hidden=false;$("messageInput").placeholder="Message #"+c.name;clearMessages();try{const messages=await api("/channels/"+c.id+"/messages?limit=50");messages.reverse().forEach(addMessage);}catch(e){status(e.message,"bad");$("messages").innerHTML='<div class="empty"><h2>Cannot read this channel</h2><p>'+safeText(e.message)+'</p><p class="hint">The bot needs View Channel and Read Message History permissions.</p></div>';}}
+ async function send(){const content=$("messageInput").value.trim();if(!content)return;try{if(mode==="webhook"){const r=await fetch(webhook+"?wait=true",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content})});if(!r.ok)throw new Error("Webhook send failed: "+r.status);const m=await r.json();if(m?.id)addMessage(m);}else{if(!currentChannel)throw new Error("Select a channel first.");const m=await api("/channels/"+currentChannel+"/messages",{method:"POST",body:JSON.stringify({content})});addMessage(m);} $("messageInput").value="";$("messageInput").style.height="auto";}catch(e){status(e.message,"bad");}}
+ $("webhookConnect").onclick=connectWebhook;$("botConnect").onclick=connectBot;$("sendButton").onclick=send;
+ $("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}});
+ $("messageInput").addEventListener("input",e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,160)+"px";});
+ window.addEventListener("beforeunload",()=>{if(ws)ws.close();if(heartbeat)clearInterval(heartbeat);token="";webhook="";});
+})();
+</script>
+</body></html>
