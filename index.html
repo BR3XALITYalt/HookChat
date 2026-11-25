@@ -8,12 +8,12 @@
 <style>
 :root{color-scheme:dark;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:#313338;color:#dbdee1}
 *{box-sizing:border-box}html{height:100%;overscroll-behavior:none}body{margin:0;height:100%;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,textarea{font:inherit}button{cursor:pointer;border:0;color:inherit}
-.app{position:relative;height:100dvh;min-height:0;display:grid;grid-template-columns:68px 230px minmax(0,1fr);background:#313338}
+.app{position:relative;height:100dvh;min-height:0;display:grid;grid-template-columns:68px 230px minmax(0,1fr);background:#313338}.app.sidebar-hidden{grid-template-columns:68px minmax(0,1fr)}.app.sidebar-hidden .sidebar{display:none}
 .servers{background:#1e1f22;padding:12px 10px;display:flex;flex-direction:column;gap:9px;align-items:center;overflow:auto}
 .server{width:46px;height:46px;border-radius:50%;background:#313338;display:grid;place-items:center;font-weight:700;font-size:15px;transition:border-radius .12s}
 .server:hover,.server.active{border-radius:16px;background:#5865f2}.server.add{color:#23a559;font-size:24px}
 .sidebar{background:#2b2d31;display:flex;flex-direction:column;min-width:0;border-right:1px solid #252629}
-.brand{height:52px;padding:0 16px;display:flex;align-items:center;font-weight:750;font-size:16px;border-bottom:1px solid #252629}
+.brand{height:52px;padding:0 12px 0 16px;display:flex;align-items:center;justify-content:space-between;font-weight:750;font-size:16px;border-bottom:1px solid #252629}.sidebar-close{width:30px;height:30px;border-radius:5px;background:transparent;color:#b5bac1;font-size:20px;line-height:1}.sidebar-close:hover{background:#404249;color:#fff}
 .connection{padding:12px;display:grid;gap:8px;border-bottom:1px solid #252629}
 .tabs{display:grid;grid-template-columns:1fr 1fr;background:#1e1f22;padding:3px;border-radius:6px}
 .tabs button{padding:7px 4px;background:transparent;border-radius:4px;color:#b5bac1}.tabs button.active{background:#404249;color:white}
@@ -37,7 +37,7 @@
   .servers{padding:calc(9px + env(safe-area-inset-top)) 5px max(10px,env(safe-area-inset-bottom));gap:10px}
   .server{width:40px;height:40px;flex:none}
   .sidebar{display:none;position:fixed;z-index:20;left:52px;top:0;bottom:0;bottom:env(safe-area-inset-bottom);width:min(300px,calc(100vw - 68px));box-shadow:8px 0 24px #0008;padding-bottom:env(safe-area-inset-bottom)}
-  .app.show-sidebar .sidebar{display:flex}
+  .app.sidebar-hidden .sidebar{display:none}\n  .app.show-sidebar .sidebar{display:flex}
   .app.show-sidebar:before{content:"";position:fixed;z-index:19;inset:0;background:#0009}
   .topbar{height:54px;padding:0 10px;gap:10px;padding-top:env(safe-area-inset-top)}
   #menu{width:40px;height:40px;flex:none;border-radius:8px}
@@ -69,7 +69,7 @@
 <div class="app" id="app">
  <aside class="servers" id="serverRail"><div class="server active" title="HookChat">H</div></aside>
  <aside class="sidebar">
-  <div class="brand">HookChat</div>
+  <div class="brand"><span>HookChat</span><button class="sidebar-close" id="closeSidebar" aria-label="Close sidebar" title="Close sidebar">×</button></div>
   <section class="connection">
    <div class="tabs"><button id="webhookTab" class="active">Webhook</button><button id="botTab">Bot</button></div>
    <div id="webhookPanel">
@@ -101,8 +101,8 @@
  const status=(s,kind="")=>{ $("status").textContent=s;$("status").className="status "+kind; };
  function setMode(next){mode=next;$("webhookTab").classList.toggle("active",next==="webhook");$("botTab").classList.toggle("active",next==="bot");$("webhookPanel").classList.toggle("hidden",next!=="webhook");$("botPanel").classList.toggle("hidden",next!=="bot");$("guildList").innerHTML="";$("channelList").innerHTML="";$("composerWrap").hidden=true;status("Not connected");}
  $("webhookTab").onclick=()=>setMode("webhook");$("botTab").onclick=()=>setMode("bot");
- $("menu").onclick=()=>{const open=$("app").classList.toggle("show-sidebar");$("menu").setAttribute("aria-expanded",String(open));};
- function closeMobileSidebar(){if(window.matchMedia("(max-width:520px)").matches){$("app").classList.remove("show-sidebar");$("menu").setAttribute("aria-expanded","false");}}
+ function setSidebar(open){const mobile=window.matchMedia("(max-width:520px)").matches;$("app").classList.toggle("show-sidebar",mobile&&open);$("app").classList.toggle("sidebar-hidden",!mobile&&!open);$("menu").setAttribute("aria-expanded",String(open));}\n $("menu").onclick=()=>{const mobile=window.matchMedia("(max-width:520px)").matches;const open=mobile?!$("app").classList.contains("show-sidebar"):$("app").classList.contains("sidebar-hidden");setSidebar(open);};\n $("closeSidebar").onclick=()=>setSidebar(false);
+ function closeMobileSidebar(){if(window.matchMedia("(max-width:520px)").matches)setSidebar(false);}
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMobileSidebar();});
  document.addEventListener("click",e=>{if(!window.matchMedia("(max-width:520px)").matches)return;if(!$ ("app").classList.contains("show-sidebar"))return;if(!e.target.closest(".sidebar")&&!e.target.closest("#menu"))closeMobileSidebar();});
  async function api(path,options={}){const r=await fetch(API+path,{...options,headers:{Authorization:"Bot "+token,"Content-Type":"application/json",...(options.headers||{})}});const data= r.status===204?null:await r.json().catch(()=>null);if(!r.ok)throw new Error(data?.message||("Discord API error "+r.status));return data;}
