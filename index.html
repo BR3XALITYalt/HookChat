@@ -7,8 +7,8 @@
 <title>HookChat</title>
 <style>
 :root{color-scheme:dark;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:#313338;color:#dbdee1}
-*{box-sizing:border-box}body{margin:0;height:100vh;overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer;border:0;color:inherit}
-.app{height:100dvh;display:grid;grid-template-columns:68px 230px minmax(0,1fr);background:#313338}
+*{box-sizing:border-box}html{height:100%;overscroll-behavior:none}body{margin:0;height:100%;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,textarea{font:inherit}button{cursor:pointer;border:0;color:inherit}
+.app{position:relative;height:100dvh;min-height:0;display:grid;grid-template-columns:68px 230px minmax(0,1fr);background:#313338}
 .servers{background:#1e1f22;padding:12px 10px;display:flex;flex-direction:column;gap:9px;align-items:center;overflow:auto}
 .server{width:46px;height:46px;border-radius:50%;background:#313338;display:grid;place-items:center;font-weight:700;font-size:15px;transition:border-radius .12s}
 .server:hover,.server.active{border-radius:16px;background:#5865f2}.server.add{color:#23a559;font-size:24px}
@@ -28,11 +28,41 @@
 .messages{flex:1;overflow:auto;padding:18px 22px 28px;display:flex;flex-direction:column;gap:16px}
 .message{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px}.avatar{width:38px;height:38px;border-radius:50%;background:#5865f2;display:grid;place-items:center;font-weight:700;color:white}
 .msg-head{display:flex;gap:8px;align-items:baseline}.author{font-weight:650;color:#f2f3f5}.time{font-size:11px;color:#949ba4}.content{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:3px}.content a{color:#00a8fc}
-.composer-wrap{padding:0 20px 22px}.composer{background:#383a40;border-radius:8px;padding:10px;display:flex;gap:10px;align-items:flex-end}.composer textarea{flex:1;resize:none;max-height:160px;min-height:24px;background:transparent;border:0;outline:0;color:#dbdee1;padding:4px}.composer button{background:#5865f2;border-radius:5px;padding:7px 13px;color:white}
+.composer-wrap{padding:0 20px max(22px,env(safe-area-inset-bottom))}.composer{background:#383a40;border-radius:8px;padding:10px;display:flex;gap:10px;align-items:flex-end}.composer textarea{flex:1;resize:none;max-height:160px;min-height:24px;background:transparent;border:0;outline:0;color:#dbdee1;padding:4px}.composer button{background:#5865f2;border-radius:5px;padding:7px 13px;color:white}
 .empty{margin:auto;text-align:center;color:#949ba4;max-width:420px;padding:30px}.empty h2{color:#f2f3f5;font-size:22px}.status{font-size:11px;color:#949ba4}.status.ok{color:#23a559}.status.bad{color:#ed4245}
 .hidden{display:none!important}
 @media(max-width:720px){.app{grid-template-columns:54px 180px minmax(0,1fr)}.servers{padding:10px 5px}.server{width:40px;height:40px}.connection{padding:8px}.messages{padding:14px 12px}.composer-wrap{padding:0 10px 12px}.topic{display:none}}
-@media(max-width:520px){.app{grid-template-columns:52px minmax(0,1fr)}.sidebar{display:none}.app.show-sidebar{grid-template-columns:52px minmax(0,1fr)}.app.show-sidebar .sidebar{display:flex;position:absolute;z-index:5;left:52px;top:0;bottom:0;width:230px;box-shadow:8px 0 24px #0008}.topbar{padding:0 10px}}
+@media(max-width:520px){
+  .app{grid-template-columns:52px minmax(0,1fr);height:100dvh}
+  .servers{padding:calc(9px + env(safe-area-inset-top)) 5px max(10px,env(safe-area-inset-bottom));gap:10px}
+  .server{width:40px;height:40px;flex:none}
+  .sidebar{display:none;position:fixed;z-index:20;left:52px;top:0;bottom:0;bottom:env(safe-area-inset-bottom);width:min(300px,calc(100vw - 68px));box-shadow:8px 0 24px #0008;padding-bottom:env(safe-area-inset-bottom)}
+  .app.show-sidebar .sidebar{display:flex}
+  .app.show-sidebar:before{content:"";position:fixed;z-index:19;inset:0;background:#0009}
+  .topbar{height:54px;padding:0 10px;gap:10px;padding-top:env(safe-area-inset-top)}
+  #menu{width:40px;height:40px;flex:none;border-radius:8px}
+  .messages{padding:14px 12px 18px;gap:14px}
+  .message{grid-template-columns:34px minmax(0,1fr);gap:9px}
+  .avatar{width:34px;height:34px}
+  .composer-wrap{padding:0 8px max(9px,env(safe-area-inset-bottom))}
+  .composer{padding:8px;gap:7px;border-radius:10px}
+  .composer textarea{font-size:16px;min-height:34px;padding:7px 5px}
+  .composer button{min-height:38px;padding:7px 13px}
+  .field{font-size:16px;min-height:42px}
+  .primary{min-height:40px}
+  .tabs button{min-height:38px}
+  .guild-item,.channel-item{min-height:42px}
+  .empty{padding:22px 12px}
+  .empty h2{font-size:20px}
+  .topic{display:none}
+}
+@media(max-width:360px){
+  .servers{padding-left:4px;padding-right:4px}
+  .app{grid-template-columns:48px minmax(0,1fr)}
+  .sidebar{left:48px;width:min(290px,calc(100vw - 58px))}
+  .message{grid-template-columns:30px minmax(0,1fr);gap:8px}
+  .avatar{width:30px;height:30px}
+}
 </style>
 </head>
 <body>
@@ -71,7 +101,10 @@
  const status=(s,kind="")=>{ $("status").textContent=s;$("status").className="status "+kind; };
  function setMode(next){mode=next;$("webhookTab").classList.toggle("active",next==="webhook");$("botTab").classList.toggle("active",next==="bot");$("webhookPanel").classList.toggle("hidden",next!=="webhook");$("botPanel").classList.toggle("hidden",next!=="bot");$("guildList").innerHTML="";$("channelList").innerHTML="";$("composerWrap").hidden=true;status("Not connected");}
  $("webhookTab").onclick=()=>setMode("webhook");$("botTab").onclick=()=>setMode("bot");
- $("menu").onclick=()=> $("app").classList.toggle("show-sidebar");
+ $("menu").onclick=()=>{const open=$("app").classList.toggle("show-sidebar");$("menu").setAttribute("aria-expanded",String(open));};
+ function closeMobileSidebar(){if(window.matchMedia("(max-width:520px)").matches){$("app").classList.remove("show-sidebar");$("menu").setAttribute("aria-expanded","false");}}
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMobileSidebar();});
+ document.addEventListener("click",e=>{if(!window.matchMedia("(max-width:520px)").matches)return;if(!$ ("app").classList.contains("show-sidebar"))return;if(!e.target.closest(".sidebar")&&!e.target.closest("#menu"))closeMobileSidebar();});
  async function api(path,options={}){const r=await fetch(API+path,{...options,headers:{Authorization:"Bot "+token,"Content-Type":"application/json",...(options.headers||{})}});const data= r.status===204?null:await r.json().catch(()=>null);if(!r.ok)throw new Error(data?.message||("Discord API error "+r.status));return data;}
  function safeText(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  function addMessage(m){if(!m||lastMessageIds.has(m.id))return;lastMessageIds.add(m.id);const row=document.createElement("article");row.className="message";const name=m.author?.global_name||m.author?.username||m.webhook_id&&"Webhook"||"Unknown";const initial=(name[0]||"?").toUpperCase();const date=m.timestamp?new Date(m.timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";row.innerHTML='<div class="avatar">'+safeText(initial)+'</div><div><div class="msg-head"><span class="author">'+safeText(name)+'</span><span class="time">'+safeText(date)+'</span></div><div class="content">'+safeText(m.content||"")+'</div></div>'; $("messages").append(row);$("messages").scrollTop=$("messages").scrollHeight;}
@@ -82,7 +115,7 @@
  function renderGuilds(guilds){$("guildList").innerHTML="";guilds.forEach(addGuild);}
  function addGuild(g){if(!g?.id||document.querySelector('[data-guild="'+g.id+'"]'))return;const b=document.createElement("button");b.className="guild-item";b.dataset.guild=g.id;b.textContent=g.name||"Unnamed server";b.onclick=()=>selectGuild(g.id);$("guildList").append(b);}
  async function selectGuild(id){currentGuild=id;document.querySelectorAll(".guild-item").forEach(b=>b.classList.toggle("active",b.dataset.guild===id));try{const channels=await api("/guilds/"+id+"/channels");$("channelList").innerHTML="";channels.filter(c=>c.type===0||c.type===5).forEach(c=>{const b=document.createElement("button");b.className="channel-item";b.textContent=c.name;b.onclick=()=>selectChannel(c);$("channelList").append(b);});}catch(e){status(e.message,"bad");}}
- async function selectChannel(c){currentChannel=c.id;document.querySelectorAll(".channel-item").forEach(b=>b.classList.toggle("active",b.textContent===c.name));$("channelTitle").textContent=c.name;$("topTopic").textContent="";$("composerWrap").hidden=false;$("messageInput").placeholder="Message #"+c.name;clearMessages();try{const messages=await api("/channels/"+c.id+"/messages?limit=50");messages.reverse().forEach(addMessage);}catch(e){status(e.message,"bad");$("messages").innerHTML='<div class="empty"><h2>Cannot read this channel</h2><p>'+safeText(e.message)+'</p><p class="hint">The bot needs View Channel and Read Message History permissions.</p></div>';}}
+ async function selectChannel(c){closeMobileSidebar();currentChannel=c.id;document.querySelectorAll(".channel-item").forEach(b=>b.classList.toggle("active",b.textContent===c.name));$("channelTitle").textContent=c.name;$("topTopic").textContent="";$("composerWrap").hidden=false;$("messageInput").placeholder="Message #"+c.name;clearMessages();try{const messages=await api("/channels/"+c.id+"/messages?limit=50");messages.reverse().forEach(addMessage);}catch(e){status(e.message,"bad");$("messages").innerHTML='<div class="empty"><h2>Cannot read this channel</h2><p>'+safeText(e.message)+'</p><p class="hint">The bot needs View Channel and Read Message History permissions.</p></div>';}}
  async function send(){const content=$("messageInput").value.trim();if(!content)return;try{if(mode==="webhook"){const r=await fetch(webhook+"?wait=true",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content})});if(!r.ok)throw new Error("Webhook send failed: "+r.status);const m=await r.json();if(m?.id)addMessage(m);}else{if(!currentChannel)throw new Error("Select a channel first.");const m=await api("/channels/"+currentChannel+"/messages",{method:"POST",body:JSON.stringify({content})});addMessage(m);} $("messageInput").value="";$("messageInput").style.height="auto";}catch(e){status(e.message,"bad");}}
  $("webhookConnect").onclick=connectWebhook;$("botConnect").onclick=connectBot;$("sendButton").onclick=send;
  $("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}});
